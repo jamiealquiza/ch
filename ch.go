@@ -15,11 +15,10 @@ var (
 	errRingEmpty = errors.New("Hash ring is empty")
 )
 
-// Ring implements a consistent hashing
-// ring with a configurable number of vnodes.
+// Ring implements consistent hashing.
 type Ring struct {
 	sync.RWMutex
-	Vnodes int
+	VNodes int
 	nodes  nodeList
 }
 
@@ -38,10 +37,24 @@ func (n nodeList) Len() int           { return len(n) }
 func (n nodeList) Less(i, j int) bool { return n[i].ID < n[j].ID }
 func (n nodeList) Swap(i, j int)      { n[i], n[j] = n[j], n[i] }
 
+type Config struct {
+	VNodes int
+}
+
+func New(c *Config) (*Ring, error) {
+	if c.VNodes == 0 {
+		c.VNodes = 3
+	}
+
+	return &Ring{
+		VNodes: c.VNodes,
+	}, nil
+}
+
 func (r *Ring) AddNode(name string) {
 	r.Lock()
 
-	for i := 0; i < r.Vnodes; i++ {
+	for i := 0; i < r.VNodes; i++ {
 		key := hashKey(name)
 		r.nodes = append(r.nodes, &node{ID: key, Name: name})
 	}

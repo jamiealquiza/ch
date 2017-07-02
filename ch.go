@@ -3,11 +3,9 @@
 package ch
 
 import (
-	"crypto/md5"
 	"errors"
 	"fmt"
 	"sort"
-	"strconv"
 	"sync"
 )
 
@@ -25,7 +23,7 @@ type Ring struct {
 // node represents a real node
 // with an ID and Name association.
 type node struct {
-	ID   int
+	ID   uint32
 	Name string
 }
 
@@ -42,7 +40,7 @@ type Config struct {
 }
 
 func New(c *Config) (*Ring, error) {
-	if c.VNodes == 0 {
+	if c.VNodes < 1 {
 		c.VNodes = 3
 	}
 
@@ -55,7 +53,7 @@ func (r *Ring) AddNode(name string) {
 	r.Lock()
 
 	for i := 0; i < r.VNodes; i++ {
-		key := hashKey(fmt.Sprintf("%s-vnode-%d", name, i))
+		key := hash(fmt.Sprintf("%s-vnode-%d", name, i))
 		r.nodes = append(r.nodes, &node{ID: key, Name: name})
 	}
 
@@ -84,12 +82,12 @@ func (r *Ring) GetNode(k string) (string, error) {
 		return "", ErrRingEmpty
 	}
 
-	node := r.search(hashKey(k))
+	node := r.search(hash(k))
 
 	return node, nil
 }
 
-func (r *Ring) search(n int) string {
+func (r *Ring) search(n uint32) string {
 	r.RLock()
 
 	i := sort.Search(len(r.nodes), func(i int) bool {
@@ -103,9 +101,14 @@ func (r *Ring) search(n int) string {
 	return node
 }
 
-func hashKey(s string) int {
-	h := fmt.Sprintf("%x", md5.Sum([]byte(s)))
-	k, _ := strconv.ParseInt(h[:4], 16, 32)
+// hash takes a key k and returns
+// the FNV-1a 32 bit hash.
+func hash(k string) uint32 {
+	var h uint32 = 0x811C9DC5
+	for _, c := range []byte(k) {
+		h ^= uint32(c)
+		h *= 0x1000193
+	}
 
-	return int(k)
+	return h
 }

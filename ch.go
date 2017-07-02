@@ -55,7 +55,7 @@ func (r *Ring) AddNode(name string) {
 	r.Lock()
 
 	for i := 0; i < r.VNodes; i++ {
-		key := hashKey(name)
+		key := hashKey(fmt.Sprintf("%s-vnode-%d", name, i))
 		r.nodes = append(r.nodes, &node{ID: key, Name: name})
 	}
 
@@ -105,7 +105,7 @@ func (r *Ring) search(n int) string {
 
 func hashKey(s string) int {
 	h := fmt.Sprintf("%x", md5.Sum([]byte(s)))
-	k, _ := strconv.ParseInt(h, 16, 32)
+	k, _ := strconv.ParseInt(h[:4], 16, 32)
 
 	return int(k)
 }

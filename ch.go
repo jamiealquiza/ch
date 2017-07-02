@@ -12,7 +12,7 @@ import (
 )
 
 var (
-	errRingEmpty = errors.New("Hash ring is empty")
+	ErrRingEmpty = errors.New("Hash ring is empty")
 )
 
 // Ring implements consistent hashing.
@@ -81,7 +81,7 @@ func (r *Ring) RemoveNode(name string) {
 
 func (r *Ring) GetNode(k string) (string, error) {
 	if len(r.nodes) == 0 {
-		return "", errRingEmpty
+		return "", ErrRingEmpty
 	}
 
 	node := r.search(hashKey(k))
